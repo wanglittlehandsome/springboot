@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bestway.program.dao.hospital.HospitalDao">
+    <!--获取指定医疗机构-->
+    <resultMap id="hospital" type="com.bestway.program.model.pojo.hospital.Hospital">
+        <result column="id" property="hospitalID"></result>
+        <result column="name" property="hospitalName"></result>
+        <result column="address" property="hospitalAddress"></result>
+        <result column="juli" property="juli"></result>
+    </resultMap>
+    <select id="queryAppointHospital" resultMap="hospital">
+        SELECT hc.id,hc.name,hc.address,
+        ROUND(
+        6378.138 * 2 * ASIN(
+        SQRT(
+        POW(
+        SIN(
+        (
+        #{latitude} * PI() / 180 - hc.latitude * PI() / 180
+        ) / 2
+        ),
+        2
+        ) + COS( #{latitude} * PI() / 180) * COS(hc.latitude * PI() / 180) * POW(
+        SIN(
+        (
+        #{longitude} * PI() / 180 - hc.longitude * PI() / 180
+        ) / 2
+        ),
+        2
+        )
+        )
+        ) * 1000
+        ) AS juli
+        FROM product_card pc
+        LEFT JOIN products p on p.id=pc.product
+        LEFT JOIN product_provider pp on p.id=pp.product_id
+        LEFT JOIN health_center hc on pp.provider_id=hc.id
+        where 1=1
+        <if test="cardID!=null">
+            AND pc.id=#{cardID}
+        </if>
+        GROUP BY hc.id
+        ORDER BY juli
+    </select>
+
+</mapper>

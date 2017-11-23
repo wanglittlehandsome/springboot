@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bestway.program.dao.product.ProductCardDao">
+    <select id="queryProductCardList" resultType="com.bestway.program.model.pojo.product.ProductCardList">
+     SELECT
+			pc.id,pc.number,pc.`name` product,p.original_price originalPrice,pc.sale_price salePrice,pc.sale_date saleDate,
+			pc.validity_date validityDate,pc.`status`,pc.sale_status saleStatus,pc.`comment`
+		FROM
+			product_card pc
+		LEFT JOIN products p ON p.id = pc.product
+		 ORDER BY pc.id DESC
+    </select>
+    <!--体检卡列表-->
+    <resultMap id="productCardsMap" type="com.bestway.program.model.pojo.home.ProductCards">
+        <result column="ptName" property="productType"></result>
+        <collection property="product" ofType="com.bestway.program.model.pojo.product.Product"
+                    select="queryProductCards" column="productType=productType,cardID=cardID">
+        </collection>
+    </resultMap>
+    <select id="queryProductCard" resultMap="productCardsMap">
+        SELECT pt.`name` as productType,pc.id as cardID
+        from product_type pt
+        LEFT JOIN products p on p.product_type_id=pt.id
+        LEFT JOIN product_card pc on pc.product=p.id
+        where pc.id IS NOT NULL
+        <if test="productType!=null">
+            AND pt.name=#{productType}
+        </if>
+        ORDER BY pt.`name`
+        <if test="page != null">
+            limit #{page.startNumber}, #{page.pageSize}
+        </if>
+    </select>
+    <resultMap id="productCardsMaps" type="com.bestway.program.model.pojo.product.Product">
+        <result column="cardID" property="cardID"></result>
+        <result column="cardNumber" property="cardNumber"></result>
+        <result column="productID" property="productID"></result>
+        <result column="pName" property="productName"></result>
+        <result column="apply_to" property="applyTo"></result>
+        <result column="sale_price" property="salePrice"></result>
+        <collection property="labels" ofType="com.bestway.program.model.pojo.product.Labels">
+            <result column="labelID" property="labelID"></result>
+            <result column="label" property="name"></result>
+        </collection>
+    </resultMap>
+    <select id="queryProductCards" resultMap="productCardsMaps">
+        SELECT pt.`name` as ptName,pc.id as cardID,pc.sale_price,pc.number as cardNumber,p.id as productID,p.`name` as
+        pName,p.apply_to,l.id as labelID,l.label
+        from product_type pt
+        LEFT JOIN products p on p.product_type_id=pt.id
+        LEFT JOIN product_card pc on pc.product=p.id
+        LEFT JOIN product_in_label pl on p.id=pl.product_id
+        LEFT JOIN label l on pl.label_id=l.id
+        where 1=1 AND pc.id IS NOT NULL
+        <if test="productType!=null">
+            AND pt.name=#{productType}
+        </if>
+        <if test="cardID!=null">
+            AND pc.id=#{cardID}
+        </if>
+    </select>
+
+    <!--套餐详情-->
+    <resultMap id="ProductDetailMap" type="com.bestway.program.model.pojo.product.ProductDetail">
+        <result column="cardID" property="cardID"></result>
+        <result column="sale_price" property="price"></result>
+        <result column="pID" property="productId"></result>
+        <result column="pName" property="productName"></result>
+        <result column="description" property="description"></result>
+        <collection property="labels" ofType="com.bestway.program.model.pojo.product.Labels">
+            <result column="labelID" property="labelID"></result>
+            <result column="label" property="name"></result>
+        </collection>
+        <collection property="detailForItemFather" ofType="com.bestway.program.model.pojo.product.DetailForItemFather">
+            <result column="itemName" property="itemName"></result>
+        </collection>
+    </resultMap>
+    <select id="queryProductInfo" resultMap="ProductDetailMap">
+		  SELECT pc.id as cardID,p.id as pID,p.name as pName,pc.sale_price,l.id as labelID,l.label,pi.name as itemName,
+		        ,p.description
+          FROM product_card pc
+          LEFT JOIN products p on pc.product=p.id
+          LEFT JOIN product_in_label pl on pl.product_id=p.id
+          LEFT JOIN label l on pl.label_id=l.id
+          LEFT JOIN product_health_exam_section ps on ps.product_id=p.id
+          LEFT JOIN product_health_exam_item pi on pi.section_id=ps.id
+          where pc.id=#{cardID}
+	</select>
+
+    <!--预约体检页面>通过体检卡号查询套餐及项目检查和单项检查-->
+    <resultMap id="productOrder" type="com.bestway.program.model.pojo.product.ProductOrder">
+        <result column="cardID" property="cardID"></result>
+        <result column="pID" property="productId"></result>
+        <result column="pName" property="productName"></result>
+        <result column="full_pic" property="fullPic"></result>
+        <result column="validity_date" property="validityDate" jdbcType="DATE"></result>
+        <collection property="healthExamSection" ofType="com.bestway.program.model.pojo.product.HealthExamSection">
+            <result column="sectionName" property="sectionName"></result>
+            <result column="description" property="description"></result>
+        </collection>
+        <collection property="healthExamItem" ofType="com.bestway.program.model.pojo.product.HealthExamItem">
+            <result column="itemName" property="itemName"></result>
+        </collection>
+    </resultMap>
+    <select id="queryProductOrder" resultMap="productOrder">
+          SELECT pc.id as cardID,pc.validity_date,p.id as pID,p.name as pName,p.full_pic,ps.name as sectionName,
+                 ps.description,pi.name as itemName
+          FROM product_card pc
+          LEFT JOIN products p on pc.product=p.id
+          LEFT JOIN product_in_label pl on pl.product_id=p.id
+          LEFT JOIN label l on pl.label_id=l.id
+          LEFT JOIN product_health_exam_section ps on ps.product_id=p.id
+          LEFT JOIN product_health_exam_item pi on pi.section_id=ps.id
+          where pc.id=#{cardID}
+	 </select>
+</mapper>

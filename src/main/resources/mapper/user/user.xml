@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bestway.program.dao.user.UserDao">
+    <!--查询用户通过手机号-->
+    <select id="qeuryUser" resultType="Integer">
+        SELECT id from `user` where status=1 and mobile=#{mobile}
+    </select>
+    <!--添加用户-->
+    <insert id="insertUser" useGeneratedKeys="true" keyProperty="id" parameterType="com.bestway.program.model.dto.user.UserDto">
+        INSERT INTO `user`(id,realname,id_number,mobile,created_time)
+        VALUES(id,#{name},#{idNumber},#{mobile},now())
+    </insert>
+</mapper>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bestway.program.dao.personal.PersonalDao">
+    <!--收货地址管理-->
+    <select id="queryAddressManager" resultType="com.bestway.program.model.dto.personal.ReceiverAddressDto">
+        SELECT user_id as userID,receiver_name as receiverName,ua.province,ua.city,ua.district,ua.mobile,
+               syp.name as provinceName,syc.name as cityName,syd.name as districtName,ua.address
+        from  user_address ua
+        LEFT JOIN user u on u.id=ua.user_id
+        LEFT JOIN sys_province syp on ua.province=syp.id
+        LEFT JOIN sys_city syc on ua.city=syc.id
+        LEFT JOIN sys_district syd on ua.district=syd.id
+        where u.id=#{userID}
+    </select>
+
+    <!--新增收货地址-->
+    <insert id="insertReceiveAddress" useGeneratedKeys="true" keyProperty="id"
+            parameterType="com.bestway.program.model.dto.personal.ReceiverAddressDto">
+         INSERT INTO user_address(id,user_id,receiver_name,mobile,province,city,district,address,created_time)
+         VALUES (id,#{userID},#{receiverName},#{mobile},#{province},#{city},#{district},#{address},now())
+    </insert>
+</mapper>

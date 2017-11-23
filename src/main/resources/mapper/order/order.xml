@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bestway.program.dao.order.CardOrderDao">
+    <!--添加持卡预约订单-->
+    <insert id="insertOrder" parameterType="com.bestway.program.model.dto.orders.OrderParamDto" useGeneratedKeys="true"
+            keyProperty="id">
+           INSERT INTO orders(id,status,user_id,quantity,total_price,total_discount,actual_price,order_type,card_number,created_time)
+           VALUES (id,#{status},#{userID},#{quantity},#{totalPrice},#{totalDiscount},#{actualPrice},#{orderType},#{cardNumber},NOW())
+       </insert>
+
+    <!--添加订单产品关联-->
+    <insert id="insertOrderItem" parameterType="com.bestway.program.model.dto.orders.OrderItemDto"
+            useGeneratedKeys="true" keyProperty="id">
+           INSERT INTO order_item(id,order_id,product_id,provider,provider_type)
+           VALUES (id,#{orderID},#{productID},#{provider},#{providerType})
+    </insert>
+
+    <!--添加预约表-->
+    <insert id="insertOrderReservationDto" parameterType="com.bestway.program.model.dto.orders.OrderReservationDto"
+            useGeneratedKeys="true" keyProperty="id">
+           INSERT INTO order_item_reservation(id,order_item_id,schedule,subscriber,mobile,id_type,id_number,sex)
+           VALUES (id,#{orderItemID},#{scheduleDate},#{subscriber},#{mobile},#{idType},#{idNumber},#{sex})
+    </insert>
+
+    <!--持卡预约列表-->
+    <resultMap id="orderListPojo" type="com.bestway.program.model.pojo.orders.OrderListPojo">
+        <result column="pName" property="productName"></result>
+        <result column="full_pic" property="fullPic"></result>
+        <result column="total_price" property="price"></result>
+        <result column="order_status" property="status"></result>
+        <result column="hName" property="hospitalName"></result>
+        <result column="address" property="address"></result>
+        <result column="schedule" property="schedule" jdbcType="DATE"></result>
+        <result column="subscriber" property="subscriber"></result>
+        <collection property="healthExamItem" ofType="com.bestway.program.model.pojo.product.HealthExamItem">
+            <result column="itemName" property="itemName"></result>
+        </collection>
+    </resultMap>
+    <select id="queryOrderList" resultMap="orderListPojo">
+        SELECT p.name as
+        pName,p.full_pic,o.total_price,os.order_status,hc.`name` as hName,hc.address,oir.`schedule`,oir.subscriber,
+        hi.`name` as itemName
+        FROM orders o
+        LEFT JOIN order_status os on o.`status`=os.id
+        LEFT JOIN order_item oi on o.id=oi.order_id
+        LEFT JOIN order_item_reservation oir on oir.order_item_id=oi.id
+        LEFT JOIN products p on oi.product_id=p.id
+        LEFT JOIN health_center hc on oi.provider=hc.id
+        LEFT JOIN product_health_exam_section he on p.id=he.product_id
+        LEFT JOIN product_health_exam_item hi on hi.section_id=he.id
+        where 1=1
+        <if test="cardNumber!=null">
+            AND o.card_number=#{cardNumber}
+        </if>
+        <if test="mobile!=null">
+            AND oir.mobile=#{mobile}
+        </if>
+        ORDER BY oir.`schedule`
+    </select>
+</mapper>
